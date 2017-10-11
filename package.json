@@ -1,0 +1,23 @@
+{
+  "name": "process-mining",
+  "version": "0.0.1",
+  "description": "Collecting data for process mining.",
+  "scripts": {
+    "dev": "next",
+    "build": "next build",
+    "start": "next start"
+  },
+  "author": "Matthijs Dabroek",
+  "license": "MIT",
+  "dependencies": {
+    "firebase": "^4.5.0",
+    "material-ui": "^1.0.0-beta.16",
+    "material-ui-icons": "^1.0.0-beta.15",
+    "moment": "^2.18.1",
+    "next": "^4.0.0-beta.6",
+    "react": "^16.0.0",
+    "react-csv": "^1.0.8",
+    "react-dom": "^16.0.0",
+    "uuid": "^3.1.0"
+  }
+}
