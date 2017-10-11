@@ -4,7 +4,7 @@
   "description": "Collecting data for process mining.",
   "scripts": {
     "dev": "next",
-    "build": "next build",
+    "build": "next build && next export",
     "start": "next start"
   },
   "author": "Matthijs Dabroek",
