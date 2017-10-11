@@ -113,7 +113,6 @@ class App extends React.Component {
         const snap = await firebase.database().ref('cases').once('value');
         
         return {
-            uuid: uuidv4(),
             cases: transformCases(snap.val()),
             activities: Object.values(ACTIVITIES),
          };
@@ -123,9 +122,9 @@ class App extends React.Component {
         super(props);
         
         this.state = {
+            uuid: uuidv4(),
             cases: props.cases,
             form: defaultFormState,
-            list: [],
             open: false,
         };
     }
@@ -157,7 +156,7 @@ class App extends React.Component {
 
         const [hour, minute] = this.state.form.time.split(':');
         firebase.database().ref('cases').push({
-            uuid: this.props.uuid,
+            uuid: this.state.uuid,
             activity: this.state.form.activity,
             time: moment({ hour, minute }).format('YYYY-MM-DD HH:mm:ss'),
         });
@@ -186,7 +185,7 @@ class App extends React.Component {
     };
 
     ownActivities = ({ uuid }) => {
-        return uuid === this.props.uuid;
+        return uuid === this.state.uuid;
     }
 
     render() {
