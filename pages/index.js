@@ -56,7 +56,7 @@ const ACTIVITIES = {
 
 const MAX_ACTIVITIES = 5;
 
-const defaultFormState = {
+const DEFAULT_FORM_STATE = {
     activity: Object.values(ACTIVITIES)[0],
     time: '07:00',
 };
@@ -125,7 +125,7 @@ class App extends React.Component {
         this.state = {
             uuid: uuidv4(),
             cases: props.cases,
-            form: defaultFormState,
+            form: DEFAULT_FORM_STATE,
             open: false,
         };
     }
@@ -163,7 +163,7 @@ class App extends React.Component {
         });
         
         this.setState({
-            form: defaultFormState,
+            form: DEFAULT_FORM_STATE,
             open: false,
         });
     }
