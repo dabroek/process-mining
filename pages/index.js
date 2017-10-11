@@ -58,7 +58,7 @@ const MAX_ACTIVITIES = 5;
 
 const defaultFormState = {
     activity: Object.values(ACTIVITIES)[0],
-    time: '08:00',
+    time: '07:00',
 };
 
 const styles = theme => ({
