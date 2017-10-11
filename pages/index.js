@@ -45,6 +45,7 @@ const ACTIVITIES = {
     SHOWER: 'douchen',
     DRESS: 'aankleden',
     BREAKFAST: 'ontbijten',
+    BRUSH_TEETH: 'tanden poetsen',
     READ_NEWSPAPER: 'krant lezen',
     CHECK_MAIL: 'email checken',
     TRAVEL_BY_BIKE: 'per fiets reizen',
