@@ -1,7 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 import * as firebase from 'firebase';
-import uuid from 'uuid';
+import uuidv4 from 'uuid/v4';
 import moment from 'moment';
 import { CSVLink } from 'react-csv';
 
@@ -113,7 +113,7 @@ class App extends React.Component {
         const snap = await firebase.database().ref('cases').once('value');
         
         return {
-            uid: uuid.v1(),
+            uuid: uuidv4(),
             cases: transformCases(snap.val()),
             activities: Object.values(ACTIVITIES),
          };
@@ -157,7 +157,7 @@ class App extends React.Component {
 
         const [hour, minute] = this.state.form.time.split(':');
         firebase.database().ref('cases').push({
-            uid: this.props.uid,
+            uuid: this.props.uuid,
             activity: this.state.form.activity,
             time: moment({ hour, minute }).format('YYYY-MM-DD HH:mm:ss'),
         });
@@ -185,8 +185,8 @@ class App extends React.Component {
         this.setState({ open: false });
     };
 
-    ownActivities = ({ uid }) => {
-        return uid === this.props.uid;
+    ownActivities = ({ uuid }) => {
+        return uuid === this.props.uuid;
     }
 
     render() {
@@ -277,7 +277,7 @@ class App extends React.Component {
                                                 >
                                                     {this.props.activities
                                                         .map(activity => (
-                                                            <MenuItem key={uuid.v1()} value={activity}>
+                                                            <MenuItem key={activity} value={activity}>
                                                                 {activity}
                                                             </MenuItem>
                                                         ))}
