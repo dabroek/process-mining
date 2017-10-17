@@ -8,19 +8,19 @@ import { CSVLink } from 'react-csv';
 import Toolbar from 'material-ui/Toolbar';
 import Typography from 'material-ui/Typography';
 import Badge from 'material-ui/Badge';
+import Menu, { MenuItem } from 'material-ui/Menu';
+
 import Grid from 'material-ui/Grid';
 import Avatar from 'material-ui/Avatar';
 import Button from 'material-ui/Button';
 import IconButton from 'material-ui/IconButton';
 import { withStyles } from 'material-ui/styles';
 import { FormControl } from 'material-ui/Form';
-import { MenuItem } from 'material-ui/Menu';
 import Divider from 'material-ui/Divider';
 import Dialog, { DialogActions, DialogContent, DialogTitle } from 'material-ui/Dialog';
 import Input, { InputLabel } from 'material-ui/Input';
 import Select from 'material-ui/Select';
 import TextField from 'material-ui/TextField';
-import { SnackbarContent } from 'material-ui/Snackbar';
 import List, {
     ListItem,
     ListItemAvatar,
@@ -29,16 +29,12 @@ import List, {
     ListItemText,
 } from 'material-ui/List';
 
+import FaceIcon from 'material-ui-icons/Face';
+import AnswerIcon from 'material-ui-icons/QuestionAnswer';
+import MoreVertIcon from 'material-ui-icons/MoreVert';
+
 import AddIcon from 'material-ui-icons/Add';
 import DeleteIcon from 'material-ui-icons/Delete';
-
-import OneIcon from 'material-ui-icons/LooksOne';
-import TwoIcon from 'material-ui-icons/LooksTwo';
-import ThreeIcon from 'material-ui-icons/Looks3';
-import FourIcon from 'material-ui-icons/Looks4';
-import FiveIcon from 'material-ui-icons/Looks5';
-import FolderIcon from 'material-ui-icons/Folder';
-import InputIcon from 'material-ui-icons/Input';
 
 const ACTIVITIES = {
     WASH: 'wassen',
@@ -71,6 +67,18 @@ const styles = theme => ({
     flex: {
         flex: 1,
     },
+    menuButton: {
+      marginLeft: -12,
+      marginRight: 20,
+    },
+    badgeIcon: {
+        marginLeft: 12,
+        marginRight: 12,
+    },
+    downloadLink: {
+        color: 'black',
+        textDecoration: 'none',
+    },
     button: {
         position: 'fixed',
         top: 'auto',
@@ -90,24 +98,14 @@ if (!firebase.apps.length) {
 
 const transformCases = cases => 
     cases
-        ? Object.keys(cases).reduce((carry, key) => {
-            return [
-                ...carry,
-                {
-                    id: key,
-                    ...cases[key]
-                }
-            ];
-        }, [])
+        ? Object.keys(cases).reduce((carry, key) => ([
+            ...carry,
+            {
+                id: key,
+                ...cases[key]
+            }
+        ]), []).sort((a, b) => moment(a.time) - moment(b.time))
         : [];
-
-const getIcon = index => [
-    <OneIcon />,
-    <TwoIcon />,
-    <ThreeIcon />,
-    <FourIcon />,
-    <FiveIcon />,
-][index] || <FolderIcon />;
 
 class App extends React.Component {
     static async getInitialProps() {
@@ -126,16 +124,14 @@ class App extends React.Component {
             uuid: uuidv4(),
             cases: props.cases,
             form: DEFAULT_FORM_STATE,
-            open: false,
+            menuOpen: false,
+            dialogOpen: false,
         };
     }
 
     componentDidMount() {
-        firebase.database().ref('cases').on('value', snap => {
-            const cases = snap.val();
-            if (cases) {
-                this.setState({ cases: transformCases(cases) });
-            }
+        firebase.database().ref('cases').orderByChild('time').on('value', snap => {
+            this.setState({ cases: transformCases(snap.val()) });
         });
     }
 
@@ -164,7 +160,7 @@ class App extends React.Component {
         
         this.setState({
             form: DEFAULT_FORM_STATE,
-            open: false,
+            dialogOpen: false,
         });
     }
     
@@ -177,12 +173,12 @@ class App extends React.Component {
         firebase.database().ref('cases').remove();
     }
 
-    handleClickOpen = () => {
-        this.setState({ open: true });
+    handleClickOpen = component => event => {
+        this.setState({ [`${component}Open`]: true, anchorEl: event.currentTarget });
     };
 
-    handleRequestClose = () => {
-        this.setState({ open: false });
+    handleRequestClose = component => event => {
+        this.setState({ [`${component}Open`]: false });
     };
 
     ownActivities = ({ uuid }) => {
@@ -192,6 +188,9 @@ class App extends React.Component {
     render() {
         const { classes } = this.props;        
         const { cases, form } = this.state;
+
+        const userCount = (new Set(cases.map(activity => activity.uuid))).size;
+        const activityCount = cases.length;
 
         const ownActivities = cases.filter(this.ownActivities);
         
@@ -205,15 +204,35 @@ class App extends React.Component {
                 </Head>
                 <Grid container className={classes.container}>
                     <Grid item xs={12}>
-                        <Toolbar color="accent">
+                        <Toolbar>
                             <Typography type="title" color="inherit" className={classes.flex}>
                                 Activiteiten
                             </Typography>
-                            <CSVLink data={this.state.cases} filename="process-mining">
-                                <Badge badgeContent={cases.length} color="accent">
-                                    <InputIcon color="black" />
-                                </Badge>
-                            </CSVLink>
+                            <Badge badgeContent={userCount} className={classes.badgeIcon} color="accent">
+                                <FaceIcon color="black" />
+                            </Badge>
+                            <Badge badgeContent={activityCount} className={classes.badgeIcon} color="accent">
+                                <AnswerIcon color="black" />
+                            </Badge>
+                            <IconButton
+                                aria-label="More"
+                                aria-owns={this.state.menuOpen ? 'long-menu' : null}
+                                aria-haspopup="true"
+                                onClick={this.handleClickOpen('menu')}>
+                                <MoreVertIcon color="black" />
+                            </IconButton>
+                            <Menu
+                                id="long-menu"
+                                anchorEl={this.state.anchorEl}
+                                open={this.state.menuOpen}
+                                onRequestClose={this.handleRequestClose('menu')}
+                            >
+                                <MenuItem onClick={this.handleRequestClose('menu')}>
+                                    <CSVLink data={this.state.cases} className={classes.downloadLink} filename="process-mining">
+                                        Download CSV
+                                    </CSVLink>
+                                </MenuItem>
+                            </Menu>
                         </Toolbar>
                         <Divider />
                         <List>
@@ -222,7 +241,7 @@ class App extends React.Component {
                                     <ListItem key={id}>
                                         <ListItemAvatar>
                                             <Avatar>
-                                                {getIcon(index)}
+                                                {index + 1}
                                             </Avatar>
                                         </ListItemAvatar>
                                         <ListItemText
@@ -243,7 +262,7 @@ class App extends React.Component {
 
                         {ownActivities.length < MAX_ACTIVITIES
                             ? (
-                                <Button fab color="primary" aria-label="add" color="primary" onClick={this.handleClickOpen} className={classes.button}>
+                                <Button fab color="primary" aria-label="add" color="primary" onClick={this.handleClickOpen('dialog')} className={classes.button}>
                                     <AddIcon />
                                 </Button>
                             )
@@ -258,8 +277,8 @@ class App extends React.Component {
                             )}
                         <Dialog
                             fullWidth
-                            open={this.state.open}
-                            onRequestClose={this.handleRequestClose}
+                            open={this.state.dialogOpen}
+                            onRequestClose={this.handleRequestClose('dialog')}
                         >
                             <DialogTitle>Activiteit toevoegen</DialogTitle>
                             <DialogContent>
@@ -301,7 +320,7 @@ class App extends React.Component {
                                 </form>
                             </DialogContent>
                             <DialogActions>
-                                <Button onClick={this.handleRequestClose} color="primary">
+                                <Button onClick={this.handleRequestClose('dialog')} color="primary">
                                     Cancel
                                 </Button>
                                 <Button onClick={this.handleSubmit} color="primary">
