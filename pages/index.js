@@ -1,16 +1,29 @@
 import React from 'react';
 import moment from 'moment';
 import * as firebase from 'firebase';
-import uuidv4 from 'uuid/v4';
+import { CSVLink } from 'react-csv';
 
 import { withStyles } from 'material-ui/styles';
 import Divider from 'material-ui/Divider';
 import Grid from 'material-ui/Grid';
+import Badge from 'material-ui/Badge';
+import Menu, { MenuItem } from 'material-ui/Menu';
+import IconButton from 'material-ui/IconButton';
+
+import FaceIcon from 'material-ui-icons/Face';
+import AnswerIcon from 'material-ui-icons/QuestionAnswer';
+import MoreVertIcon from 'material-ui-icons/MoreVert';
+
+import config from '../config';
 
 import App from '../components/App';
 import Header from '../components/Header';
 import ActivityList from '../components/ActivityList';
 import AddActivityButton from '../components/AddActivityButton';
+
+if (!firebase.apps.length) {
+    firebase.initializeApp(config.firebase);
+}
 
 const MAX_ACTIVITIES = 5;
 
@@ -35,18 +48,15 @@ const styles = theme => ({
         justifyContent: 'center',
         alignItems: 'flex-start',
     },
-    flex: {
-        flex: 1,
+    badgeIcon: {
+        marginLeft: 12,
+        marginRight: 12,
     },
-  });
-
-if (!firebase.apps.length) {
-    firebase.initializeApp({
-        apiKey: "AIzaSyCUFNT7c7Eur0zWgY77ywEDp4DLxPW4R7U",
-        authDomain: "process-mining-8734a.firebaseapp.com",    
-        databaseURL: "https://process-mining-8734a.firebaseio.com/",
-    });
-}
+    downloadLink: {
+        color: 'black',
+        textDecoration: 'none',
+    },
+});
 
 const transformCases = cases => 
     cases
@@ -73,20 +83,35 @@ class Home extends React.Component {
         super(props);
         
         this.state = {
-            uuid: uuidv4(),
             cases: props.cases,
         };
     }
 
     componentDidMount() {
-        firebase.database().ref('cases').orderByChild('time').on('value', snap => {
+        this.addDatabaseListener();
+        this.signInAnonymously();
+        this.addAuthenticationListener();
+    }
+
+    addDatabaseListener = () => {
+        firebase.database().ref('cases').on('value', snap => {
             this.setState({ cases: transformCases(snap.val()) });
+        });
+    }
+
+    signInAnonymously = () => {
+        firebase.auth().signInAnonymously().catch(({ code, message }) => {});
+    }
+
+    addAuthenticationListener = () => {
+        firebase.auth().onAuthStateChanged(user => {
+            this.setState({ user });
         });
     }
 
     handleSubmit = ({ activity, time }) => {
         firebase.database().ref('cases').push({
-            uuid: this.state.uuid,
+            uid: this.state.user.uid,
             activity,
             time,
         });
@@ -100,32 +125,53 @@ class Home extends React.Component {
         firebase.database().ref('cases').remove();
     }
     
-    filterActivities = ({ uuid }) => {
-        return uuid === this.state.uuid;
+    filterActivities = ({ uid }) => {
+        return uid === this.state.user.uid;
     }
 
     render() {
         const { activities, classes } = this.props;        
-        const { uuid, cases } = this.state;
+        const { user, cases } = this.state;
 
-        const ownActivities = cases.filter(this.filterActivities);
+        const ownActivities = user ? cases.filter(this.filterActivities) : [];
 
         return (
             <App title="Process Mining">
                 <Grid item xs={12}>
-                    <Header
-                        title="Activiteiten"
-                        userCount={(new Set(cases.map(activity => activity.uuid))).size}
-                        activityCount={cases.length}
-                        cases={cases}
-                    />
+                    <Header title="Activiteiten">
+                        <Badge badgeContent={(new Set(cases.map(activity => activity.uid))).size} className={classes.badgeIcon} color="accent">
+                            <FaceIcon color="black" />
+                        </Badge>
+                        <Badge badgeContent={cases.length} className={classes.badgeIcon} color="accent">
+                            <AnswerIcon color="black" />
+                        </Badge>
+                        <IconButton
+                            aria-label="More"
+                            aria-owns={this.state.menuOpen ? 'long-menu' : null}
+                            aria-haspopup="true"
+                            onClick={this.handleClickOpen}>
+                            <MoreVertIcon color="black" />
+                        </IconButton>
+                        <Menu
+                            id="long-menu"
+                            anchorEl={this.state.anchorEl}
+                            open={this.state.menuOpen}
+                            onRequestClose={this.handleRequestClose}
+                        >
+                            <MenuItem onClick={this.handleRequestClose}>
+                                <CSVLink data={cases} className={classes.downloadLink} filename="process-mining">
+                                    Download CSV
+                                </CSVLink>
+                            </MenuItem>
+                        </Menu>
+                    </Header>
                     <Divider />
                     <ActivityList
                         activities={ownActivities}
                         onDelete={this.handleDelete}
                     />
-                    {ownActivities.length < MAX_ACTIVITIES
-                        ? <AddActivityButton uuid={uuid} activities={ACTIVITIES} onSubmit={this.handleSubmit} />
+                    {user && ownActivities.length < MAX_ACTIVITIES
+                        ? <AddActivityButton activities={ACTIVITIES} onSubmit={this.handleSubmit} />
                         : (
                             <Grid container className={classes.container}>
                                 <Grid item xs={8} style={{ textAlign: 'center', color: 'red' }}>

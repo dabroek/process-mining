@@ -73,7 +73,7 @@ class AddActivityButton extends React.Component {
     };
     
     render() {
-        const { uuid, activities, classes } = this.props;
+        const { activities, classes } = this.props;
         
         return (
             <div>
