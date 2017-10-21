@@ -76,6 +76,7 @@ class Home extends React.Component {
         return {
             cases: transformCases(snap.val()),
             activities: Object.values(ACTIVITIES),
+            menuOpen: false,
          };
     }
 
@@ -124,6 +125,14 @@ class Home extends React.Component {
     handleClear = event => {
         firebase.database().ref('cases').remove();
     }
+
+    handleClickOpen = event => {
+        this.setState({ menuOpen: true, anchorEl: event.currentTarget });
+    };
+
+    handleRequestClose = event => {
+        this.setState({ menuOpen: false });
+    };
     
     filterActivities = ({ uid }) => {
         return uid === this.state.user.uid;

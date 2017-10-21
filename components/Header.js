@@ -10,35 +10,13 @@ const styles = theme => ({
     },
   });
 
-class Header extends React.Component {
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            menuOpen: false,
-        };
-    }
-
-    handleClickOpen = event => {
-        this.setState({ menuOpen: true, anchorEl: event.currentTarget });
-    };
-
-    handleRequestClose = event => {
-        this.setState({ menuOpen: false });
-    };
-
-    render() {
-        const { title, classes, children } = this.props;
-
-        return (
-            <Toolbar>
-                <Typography type="title" color="inherit" className={classes.flex}>
-                    {title}
-                </Typography>
-                {children}
-            </Toolbar>
-        );
-    }
-}
+const Header = ({ title, classes, children }) => (
+    <Toolbar>
+        <Typography type="title" color="inherit" className={classes.flex}>
+            {title}
+        </Typography>
+        {children}
+    </Toolbar>
+);
 
 export default withStyles(styles)(Header);
