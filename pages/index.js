@@ -138,8 +138,28 @@ class Home extends React.Component {
         return uid === this.state.user.uid;
     }
 
+    renderActivityButton = ownActivities => {
+        return ownActivities.length < MAX_ACTIVITIES
+            ? <AddActivityButton activities={ACTIVITIES} onSubmit={this.handleSubmit} />
+            : this.renderMessage(`Je hebt het maximale aantal van ${MAX_ACTIVITIES} activiteiten bereikt.`);
+    }
+
+    renderMessage = message => {
+        const { classes } = this.props;
+
+        return (
+            <Grid container className={classes.container}>
+                <Grid item xs={8} style={{ textAlign: 'center', color: 'red' }}>
+                    <small>
+                        <em>{message}</em>
+                    </small>
+                </Grid>
+            </Grid>
+        );
+    }
+
     render() {
-        const { activities, classes } = this.props;        
+        const { activities, classes } = this.props;
         const { user, cases } = this.state;
 
         const ownActivities = user ? cases.filter(this.filterActivities) : [];
@@ -179,17 +199,7 @@ class Home extends React.Component {
                         activities={ownActivities}
                         onDelete={this.handleDelete}
                     />
-                    {user && ownActivities.length < MAX_ACTIVITIES
-                        ? <AddActivityButton activities={ACTIVITIES} onSubmit={this.handleSubmit} />
-                        : (
-                            <Grid container className={classes.container}>
-                                <Grid item xs={8} style={{ textAlign: 'center', color: 'red' }}>
-                                    <small>
-                                        <em>Je hebt het maximale aantal van {MAX_ACTIVITIES} activiteiten bereikt.</em>
-                                    </small>
-                                </Grid>
-                            </Grid>
-                        )}
+                    {user ? this.renderActivityButton(ownActivities) : this.renderMessage('Even geduld a.u.b.')}
                 </Grid>
             </App>
         );
