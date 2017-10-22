@@ -8,18 +8,20 @@ import Divider from 'material-ui/Divider';
 import Grid from 'material-ui/Grid';
 import Badge from 'material-ui/Badge';
 import Menu, { MenuItem } from 'material-ui/Menu';
+import Button from 'material-ui/Button';
 import IconButton from 'material-ui/IconButton';
 
 import FaceIcon from 'material-ui-icons/Face';
 import AnswerIcon from 'material-ui-icons/QuestionAnswer';
 import MoreVertIcon from 'material-ui-icons/MoreVert';
+import AddIcon from 'material-ui-icons/Add';
 
 import config from '../config';
 
 import App from '../components/App';
 import Header from '../components/Header';
 import ActivityList from '../components/ActivityList';
-import AddActivityButton from '../components/AddActivityButton';
+import AddActivityDialog from '../components/AddActivityDialog';
 import LoginDialog from '../components/LoginDialog';
 import RegisterDialog from '../components/RegisterDialog';
 
@@ -58,6 +60,13 @@ const styles = theme => ({
         color: 'black',
         textDecoration: 'none',
     },
+    addActivityButton: {
+        position: 'fixed',
+        top: 'auto',
+        right: 20,
+        bottom: 20,
+        left: 'auto',
+    },
 });
 
 const transformCases = cases => 
@@ -87,6 +96,7 @@ class Home extends React.Component {
         this.state = {
             cases: props.cases,
             menuOpen: false,
+            activityDialogOpen: false,
             loginDialogOpen: false,
             registerDialogOpen: false,
         };
@@ -113,43 +123,31 @@ class Home extends React.Component {
     
     handleRegister = (displayName, email, password) => {
         const credential = firebase.auth.EmailAuthProvider.credential(email, password);
-        
-        firebase.auth().currentUser.linkWithCredential(credential).then(
-            user => {
-                console.log("Anonymous account successfully upgraded", user);
+
+        firebase.auth().currentUser.updateProfile({ displayName })
+            .then(user => {
+                this.setState({ user });
+            }).catch(error => {
+                console.log("Error updating profile", error);
+            });
+
+        return firebase.auth().currentUser.linkWithCredential(credential)
+            .then(user => {
                 this.handleRequestCloseDialog('register')();
                 this.setState({ user });
-            },
-            error => {
-                console.log("Error upgrading anonymous account", error);
-                alert(error.message);
-            }
-        );
-        firebase.auth().currentUser.updateProfile({ displayName }).then(
-            user => {
-                console.log("Profie successfully updated", user);
-                this.setState({ user });
-            },
-            error => {
-                console.log("Error updating profile", error);
-                alert(error.message);
-            }
-        );
+            });
     }
 
     handleLogin = (email, password) => {
-        firebase.auth().signInWithEmailAndPassword(email, password)
+        return firebase.auth().signInWithEmailAndPassword(email, password)
             .then(user => {
                 this.handleRequestCloseDialog('login')();
                 this.setState({ user });
-            })
-            .catch(({ code, message }) => {
-                alert(message);
             });
     }
 
     handleLogout = () => {
-        firebase.auth().signOut().then(() => {
+        return firebase.auth().signOut().then(() => {
             this.signInAnonymously();
         });
     }
@@ -160,7 +158,7 @@ class Home extends React.Component {
         });
     }
 
-    handleSubmit = ({ activity, time }) => {
+    handleAddActivity = ({ activity, time }) => {
         firebase.database().ref('cases').push({
             uid: this.state.user.uid,
             activity,
@@ -198,7 +196,17 @@ class Home extends React.Component {
 
     renderActivityButton = ownActivities => {
         return ownActivities.length < MAX_ACTIVITIES
-            ? <AddActivityButton activities={ACTIVITIES} onSubmit={this.handleSubmit} />
+            ? (
+                <Button
+                    fab
+                    color="primary"
+                    aria-label="add activity"
+                    color="primary"
+                    onClick={this.handleOpenDialog('activity')}
+                    className={this.props.classes.addActivityButton}>
+                    <AddIcon />
+                </Button>
+            )
             : this.renderMessage(`Je hebt het maximale aantal van ${MAX_ACTIVITIES} activiteiten bereikt.`);
     }
 
@@ -272,6 +280,11 @@ class Home extends React.Component {
                     />
                     {user ? this.renderActivityButton(ownActivities) : this.renderMessage('Even geduld a.u.b.')}
                 </Grid>
+                <AddActivityDialog
+                    activities={ACTIVITIES}
+                    open={this.state.activityDialogOpen}
+                    onSubmit={this.handleAddActivity}
+                    onClose={this.handleRequestCloseDialog('activity')} />
                 <RegisterDialog
                     open={this.state.registerDialogOpen}
                     onSubmit={this.handleRegister}

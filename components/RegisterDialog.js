@@ -15,6 +15,7 @@ class RegisterDialog extends React.Component {
             displayName: '',
             email: '',
             password: '',
+            error: null,
         };
     }
 
@@ -23,8 +24,6 @@ class RegisterDialog extends React.Component {
     }
 
     handleCancel = event => {
-        event.preventDefault();
-        
         this.props.onClose();
     }
 
@@ -33,7 +32,14 @@ class RegisterDialog extends React.Component {
 
         const { displayName, email, password } = this.state;
 
-        this.props.onSubmit(displayName, email, password);
+        this.props.onSubmit(displayName, email, password)
+            .then(() => this.setState({
+                displayName: '',
+                email: '',
+                password: '',
+                error: null,
+            }))
+            .catch(error => this.setState({ error }));
     }
     
     render() {
@@ -46,49 +52,55 @@ class RegisterDialog extends React.Component {
                 <form>
                     <DialogTitle>Registreren</DialogTitle>
                     <DialogContent>
-                            <Grid container>
-                                <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth>
-                                        <TextField
-                                            id="displayName"
-                                            name="displayName"
-                                            onChange={this.handleFieldChange('displayName')}
-                                            label="Naam"
-                                            type="text"
-                                            value={this.state.displayName}
-                                            fullWidth
-                                        />
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth>
-                                        <TextField
-                                            id="email"
-                                            name="email"
-                                            onChange={this.handleFieldChange('email')}
-                                            label="Email"
-                                            type="email"
-                                            value={this.state.email}
-                                            fullWidth
-                                            required
-                                        />
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth>
-                                        <TextField
-                                            id="password"
-                                            name="password"
-                                            onChange={this.handleFieldChange('password')}
-                                            label="Wachtwoord"
-                                            type="password"
-                                            value={this.state.password}
-                                            fullWidth
-                                            required
-                                        />
-                                    </FormControl>
-                                </Grid>
+                        <Grid container>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth>
+                                    <TextField
+                                        id="displayName"
+                                        name="displayName"
+                                        onChange={this.handleFieldChange('displayName')}
+                                        label="Naam"
+                                        type="text"
+                                        value={this.state.displayName}
+                                        fullWidth
+                                    />
+                                </FormControl>
                             </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth>
+                                    <TextField
+                                        id="email"
+                                        name="email"
+                                        onChange={this.handleFieldChange('email')}
+                                        label="Email"
+                                        type="email"
+                                        value={this.state.email}
+                                        fullWidth
+                                        required
+                                    />
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth>
+                                    <TextField
+                                        id="password"
+                                        name="password"
+                                        onChange={this.handleFieldChange('password')}
+                                        label="Wachtwoord"
+                                        type="password"
+                                        value={this.state.password}
+                                        fullWidth
+                                        required
+                                    />
+                                </FormControl>
+                            </Grid>
+                            {this.state.error && 
+                                <Grid item xs={12} style={{ color: 'red' }}>
+                                    <small>
+                                        {this.state.error.message}
+                                    </small>
+                                </Grid>}
+                        </Grid>
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={this.handleCancel}>
