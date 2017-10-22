@@ -20,6 +20,8 @@ import App from '../components/App';
 import Header from '../components/Header';
 import ActivityList from '../components/ActivityList';
 import AddActivityButton from '../components/AddActivityButton';
+import LoginDialog from '../components/LoginDialog';
+import RegisterDialog from '../components/RegisterDialog';
 
 if (!firebase.apps.length) {
     firebase.initializeApp(config.firebase);
@@ -76,8 +78,7 @@ class Home extends React.Component {
         return {
             cases: transformCases(snap.val()),
             activities: Object.values(ACTIVITIES),
-            menuOpen: false,
-         };
+        };
     }
 
     constructor(props) {
@@ -85,13 +86,16 @@ class Home extends React.Component {
         
         this.state = {
             cases: props.cases,
+            menuOpen: false,
+            loginDialogOpen: false,
+            registerDialogOpen: false,
         };
     }
 
     componentDidMount() {
         this.addDatabaseListener();
-        this.signInAnonymously();
         this.addAuthenticationListener();
+        this.signInAnonymously();
     }
 
     addDatabaseListener = () => {
@@ -101,7 +105,53 @@ class Home extends React.Component {
     }
 
     signInAnonymously = () => {
-        firebase.auth().signInAnonymously().catch(({ code, message }) => {});
+        firebase.auth().signInAnonymously()
+            .catch(({ code, message }) => {
+                alert(message);
+            });
+    }
+    
+    handleRegister = (displayName, email, password) => {
+        const credential = firebase.auth.EmailAuthProvider.credential(email, password);
+        
+        firebase.auth().currentUser.linkWithCredential(credential).then(
+            user => {
+                console.log("Anonymous account successfully upgraded", user);
+                this.handleRequestCloseDialog('register')();
+                this.setState({ user });
+            },
+            error => {
+                console.log("Error upgrading anonymous account", error);
+                alert(error.message);
+            }
+        );
+        firebase.auth().currentUser.updateProfile({ displayName }).then(
+            user => {
+                console.log("Profie successfully updated", user);
+                this.setState({ user });
+            },
+            error => {
+                console.log("Error updating profile", error);
+                alert(error.message);
+            }
+        );
+    }
+
+    handleLogin = (email, password) => {
+        firebase.auth().signInWithEmailAndPassword(email, password)
+            .then(user => {
+                this.handleRequestCloseDialog('login')();
+                this.setState({ user });
+            })
+            .catch(({ code, message }) => {
+                alert(message);
+            });
+    }
+
+    handleLogout = () => {
+        firebase.auth().signOut().then(() => {
+            this.signInAnonymously();
+        });
     }
 
     addAuthenticationListener = () => {
@@ -126,13 +176,21 @@ class Home extends React.Component {
         firebase.database().ref('cases').remove();
     }
 
-    handleClickOpen = event => {
+    handleOpenMenu = event => {
         this.setState({ menuOpen: true, anchorEl: event.currentTarget });
-    };
+    }
 
-    handleRequestClose = event => {
+    handleRequestCloseMenu = event => {
         this.setState({ menuOpen: false });
-    };
+    }
+    
+    handleOpenDialog = dialog => event => {
+        this.setState({ menuOpen: false, [`${dialog}DialogOpen`]: true });
+    }
+
+    handleRequestCloseDialog = dialog => event => {
+        this.setState({ [`${dialog}DialogOpen`]: false });
+    }
     
     filterActivities = ({ uid }) => {
         return uid === this.state.user.uid;
@@ -168,6 +226,7 @@ class Home extends React.Component {
             <App title="Process Mining">
                 <Grid item xs={12}>
                     <Header title="Activiteiten">
+                        <em>{user && !user.isAnonymous ? user.displayName || user.email : 'anonymous'}</em>
                         <Badge badgeContent={(new Set(cases.map(activity => activity.uid))).size} className={classes.badgeIcon} color="accent">
                             <FaceIcon color="black" />
                         </Badge>
@@ -178,20 +237,32 @@ class Home extends React.Component {
                             aria-label="More"
                             aria-owns={this.state.menuOpen ? 'long-menu' : null}
                             aria-haspopup="true"
-                            onClick={this.handleClickOpen}>
+                            onClick={this.handleOpenMenu}>
                             <MoreVertIcon color="black" />
                         </IconButton>
                         <Menu
                             id="long-menu"
                             anchorEl={this.state.anchorEl}
                             open={this.state.menuOpen}
-                            onRequestClose={this.handleRequestClose}
+                            onRequestClose={this.handleRequestCloseMenu}
                         >
-                            <MenuItem onClick={this.handleRequestClose}>
+                            <MenuItem onClick={this.handleRequestCloseMenu}>
                                 <CSVLink data={cases} className={classes.downloadLink} filename="process-mining">
                                     Download CSV
                                 </CSVLink>
                             </MenuItem>
+                            {user && user.isAnonymous &&
+                                <MenuItem onClick={this.handleOpenDialog('register')}>
+                                    Registreren
+                                </MenuItem>}
+                            {user && user.isAnonymous &&
+                                <MenuItem onClick={this.handleOpenDialog('login')}>
+                                    Inloggen
+                                </MenuItem>}
+                            {user && !user.isAnonymous && 
+                                <MenuItem onClick={this.handleLogout}>
+                                    Uitloggen
+                                </MenuItem>}
                         </Menu>
                     </Header>
                     <Divider />
@@ -201,6 +272,14 @@ class Home extends React.Component {
                     />
                     {user ? this.renderActivityButton(ownActivities) : this.renderMessage('Even geduld a.u.b.')}
                 </Grid>
+                <RegisterDialog
+                    open={this.state.registerDialogOpen}
+                    onSubmit={this.handleRegister}
+                    onClose={this.handleRequestCloseDialog('register')} />
+                <LoginDialog
+                    open={this.state.loginDialogOpen}
+                    onSubmit={this.handleLogin}
+                    onClose={this.handleRequestCloseDialog('login')} />
             </App>
         );
     }

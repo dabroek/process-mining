@@ -85,54 +85,54 @@ class AddActivityButton extends React.Component {
                     open={this.state.dialogOpen}
                     onRequestClose={this.handleRequestClose}
                 >
-                    <DialogTitle>Activiteit toevoegen</DialogTitle>
-                    <DialogContent>
-                        <form>
-                            <Grid container>
-                                <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth>
-                                        <InputLabel htmlFor="activity">Activiteit</InputLabel>
-                                        <Select
-                                            name="activity"
-                                            onChange={this.handleActivityChange}
-                                            value={this.state.activity}
-                                            input={<Input id="activity" />}
-                                            fullWidth
-                                            required
-                                        >
-                                            {Object.values(activities).map(activity => (
-                                                <MenuItem key={activity} value={activity}>
-                                                    {activity}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
+                    <form>
+                        <DialogTitle>Activiteit toevoegen</DialogTitle>
+                        <DialogContent>
+                                <Grid container>
+                                    <Grid item xs={12} sm={6}>
+                                        <FormControl fullWidth>
+                                            <InputLabel htmlFor="activity">Activiteit</InputLabel>
+                                            <Select
+                                                name="activity"
+                                                onChange={this.handleActivityChange}
+                                                value={this.state.activity}
+                                                input={<Input id="activity" />}
+                                                fullWidth
+                                                required
+                                            >
+                                                {Object.values(activities).map(activity => (
+                                                    <MenuItem key={activity} value={activity}>
+                                                        {activity}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <FormControl fullWidth>
+                                            <TextField
+                                                id="time"
+                                                name="time"
+                                                onChange={this.handleTimeChange}
+                                                label="Tijd"
+                                                type="time"
+                                                value={this.state.time}
+                                                fullWidth
+                                                required
+                                            />
+                                        </FormControl>
+                                    </Grid>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <FormControl fullWidth>
-                                        <TextField
-                                            id="time"
-                                            name="time"
-                                            onChange={this.handleTimeChange}
-                                            label="Tijd"
-                                            type="time"
-                                            value={this.state.time}
-                                            fullWidth
-                                            required
-                                        />
-                                    </FormControl>
-                                </Grid>
-                            </Grid>
-                        </form>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={this.handleRequestClose} color="primary">
-                            Cancel
-                        </Button>
-                        <Button onClick={this.handleSubmit} color="primary">
-                            Ok
-                        </Button>
-                    </DialogActions>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={this.handleRequestClose}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" onClick={this.handleSubmit} color="primary">
+                                Ok
+                            </Button>
+                        </DialogActions>
+                    </form>
                 </Dialog>
             </div>
         );
