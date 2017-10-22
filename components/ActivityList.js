@@ -13,37 +13,33 @@ import IconButton from 'material-ui/IconButton';
 
 import DeleteIcon from 'material-ui-icons/Delete';
 
-const ActivityList = ({ activities, onDelete }) => {
-    const handleDelete = event => {
-        onDelete(event.currentTarget.getAttribute('id'));
-    }
-
-    return (
-        <List>
-            {activities.length
-                ? activities.map(({ id, activity, time }, index) => (
-                    <ListItem key={id}>
-                        <ListItemAvatar>
-                            <Avatar>
-                                {index + 1}
-                            </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                            primary={activity}
-                            secondary={moment(time).format('HH:mm')}
-                        />
-                        <ListItemSecondaryAction>
-                            <IconButton id={id} onClick={handleDelete} aria-label="Delete">
-                                <DeleteIcon />
-                            </IconButton>
-                        </ListItemSecondaryAction>
-                    </ListItem>
-                ))
-                : <ListItem>
+const ActivityList = ({ activities, onDelete }) => (
+    <List>
+        {activities.length
+            ? activities.map(({ id, activity, time }, index) => (
+                <ListItem key={id}>
+                    <ListItemAvatar>
+                        <Avatar>
+                            {index + 1}
+                        </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                        primary={activity}
+                        secondary={moment(time).format('HH:mm')}
+                    />
+                    <ListItemSecondaryAction>
+                        <IconButton id={id} onClick={() => onDelete(id)} aria-label="Delete">
+                            <DeleteIcon />
+                        </IconButton>
+                    </ListItemSecondaryAction>
+                </ListItem>
+            ))
+            : (
+                <ListItem>
                     <ListItemText primary={<em>Nog geen activiteiten</em>} />
-                </ListItem>}
-        </List>
-    );
-}
+                </ListItem>
+            )}
+    </List>
+);
 
 export default ActivityList;

@@ -10,6 +10,7 @@ import Badge from 'material-ui/Badge';
 import Menu, { MenuItem } from 'material-ui/Menu';
 import Button from 'material-ui/Button';
 import IconButton from 'material-ui/IconButton';
+import Snackbar from 'material-ui/Snackbar';
 
 import FaceIcon from 'material-ui-icons/Face';
 import AnswerIcon from 'material-ui-icons/QuestionAnswer';
@@ -60,6 +61,9 @@ const styles = theme => ({
         color: 'black',
         textDecoration: 'none',
     },
+    menuButton: {
+        marginRight: -12,
+    },
     addActivityButton: {
         position: 'fixed',
         top: 'auto',
@@ -99,6 +103,7 @@ class Home extends React.Component {
             activityDialogOpen: false,
             loginDialogOpen: false,
             registerDialogOpen: false,
+            snackbarOpen: false,
         };
     }
 
@@ -115,34 +120,39 @@ class Home extends React.Component {
     }
 
     signInAnonymously = () => {
-        firebase.auth().signInAnonymously()
+        return firebase.auth().signInAnonymously()
             .catch(({ code, message }) => {
                 alert(message);
             });
     }
-    
-    handleRegister = (displayName, email, password) => {
-        const credential = firebase.auth.EmailAuthProvider.credential(email, password);
 
-        firebase.auth().currentUser.updateProfile({ displayName })
+    handleChangeProfile = ({ displayName }) => {
+        return firebase.auth().currentUser.updateProfile({ displayName })
             .then(user => {
                 this.setState({ user });
             }).catch(error => {
                 console.log("Error updating profile", error);
+                this.handleShowMessage(error.message);
             });
+    }
+    
+    handleRegister = (email, password) => {
+        const credential = firebase.auth.EmailAuthProvider.credential(email, password);
 
         return firebase.auth().currentUser.linkWithCredential(credential)
             .then(user => {
-                this.handleRequestCloseDialog('register')();
+                this.handleRequestClose('registerDialog')();
                 this.setState({ user });
+                this.handleShowMessage('Successvol geregistreerd');
             });
     }
 
     handleLogin = (email, password) => {
         return firebase.auth().signInWithEmailAndPassword(email, password)
             .then(user => {
-                this.handleRequestCloseDialog('login')();
+                this.handleRequestClose('loginDialog')();
                 this.setState({ user });
+                this.handleShowMessage('Successvol ingelogd');
             });
     }
 
@@ -164,6 +174,7 @@ class Home extends React.Component {
             activity,
             time,
         });
+        this.handleRequestClose('activityDialog')();
     }
 
     handleDelete = id => {
@@ -172,6 +183,11 @@ class Home extends React.Component {
 
     handleClear = event => {
         firebase.database().ref('cases').remove();
+        this.handleRequestCloseMenu();
+    }
+
+    handleShowMessage = message => {
+        this.setState({ message, snackbarOpen: true });
     }
 
     handleOpenMenu = event => {
@@ -182,12 +198,12 @@ class Home extends React.Component {
         this.setState({ menuOpen: false });
     }
     
-    handleOpenDialog = dialog => event => {
-        this.setState({ menuOpen: false, [`${dialog}DialogOpen`]: true });
+    handleOpen = name => event => {
+        this.setState({ menuOpen: false, [`${name}Open`]: true });
     }
 
-    handleRequestCloseDialog = dialog => event => {
-        this.setState({ [`${dialog}DialogOpen`]: false });
+    handleRequestClose = name => event => {
+        this.setState({ [`${name}Open`]: false });
     }
     
     filterActivities = ({ uid }) => {
@@ -202,7 +218,7 @@ class Home extends React.Component {
                     color="primary"
                     aria-label="add activity"
                     color="primary"
-                    onClick={this.handleOpenDialog('activity')}
+                    onClick={this.handleOpen('activityDialog')}
                     className={this.props.classes.addActivityButton}>
                     <AddIcon />
                 </Button>
@@ -234,7 +250,9 @@ class Home extends React.Component {
             <App title="Process Mining">
                 <Grid item xs={12}>
                     <Header title="Activiteiten">
-                        <em>{user && !user.isAnonymous ? user.displayName || user.email : 'anonymous'}</em>
+                        <span style={{ marginRight: 12 }}>
+                            <em>{user && !user.isAnonymous ? user.displayName || user.email : 'anonymous'}</em>
+                        </span>
                         <Badge badgeContent={(new Set(cases.map(activity => activity.uid))).size} className={classes.badgeIcon} color="accent">
                             <FaceIcon color="black" />
                         </Badge>
@@ -245,7 +263,8 @@ class Home extends React.Component {
                             aria-label="More"
                             aria-owns={this.state.menuOpen ? 'long-menu' : null}
                             aria-haspopup="true"
-                            onClick={this.handleOpenMenu}>
+                            onClick={this.handleOpenMenu}
+                            className={classes.menuButton}>
                             <MoreVertIcon color="black" />
                         </IconButton>
                         <Menu
@@ -254,18 +273,22 @@ class Home extends React.Component {
                             open={this.state.menuOpen}
                             onRequestClose={this.handleRequestCloseMenu}
                         >
+                            {user && user.isAnonymous &&
+                                <MenuItem onClick={this.handleOpen('loginDialog')}>
+                                    Inloggen
+                                </MenuItem>}
+                            {/* user && user.isAnonymous &&
+                                <MenuItem onClick={this.handleOpen('registerDialog')}>
+                                    Registreren
+                                </MenuItem> */}
                             <MenuItem onClick={this.handleRequestCloseMenu}>
                                 <CSVLink data={cases} className={classes.downloadLink} filename="process-mining">
                                     Download CSV
                                 </CSVLink>
                             </MenuItem>
-                            {user && user.isAnonymous &&
-                                <MenuItem onClick={this.handleOpenDialog('register')}>
-                                    Registreren
-                                </MenuItem>}
-                            {user && user.isAnonymous &&
-                                <MenuItem onClick={this.handleOpenDialog('login')}>
-                                    Inloggen
+                            {user && !user.isAnonymous &&
+                                <MenuItem onClick={this.handleClear}>
+                                    Alles verwijderen
                                 </MenuItem>}
                             {user && !user.isAnonymous && 
                                 <MenuItem onClick={this.handleLogout}>
@@ -284,15 +307,22 @@ class Home extends React.Component {
                     activities={ACTIVITIES}
                     open={this.state.activityDialogOpen}
                     onSubmit={this.handleAddActivity}
-                    onClose={this.handleRequestCloseDialog('activity')} />
-                <RegisterDialog
-                    open={this.state.registerDialogOpen}
-                    onSubmit={this.handleRegister}
-                    onClose={this.handleRequestCloseDialog('register')} />
+                    onClose={this.handleRequestClose('activityDialog')} />
                 <LoginDialog
                     open={this.state.loginDialogOpen}
                     onSubmit={this.handleLogin}
-                    onClose={this.handleRequestCloseDialog('login')} />
+                    onClose={this.handleRequestClose('loginDialog')} />
+                {/* <RegisterDialog
+                    open={this.state.registerDialogOpen}
+                    onSubmit={this.handleRegister}
+                    onClose={this.handleRequestClose('registerDialog')} /> */}
+                <Snackbar
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    open={this.state.snackbarOpen}
+                    autoHideDuration={3000}
+                    onRequestClose={this.handleRequestClose('snackbar')}
+                    SnackbarContentProps={{ 'aria-describedby': 'message-id' }}
+                    message={<span id="message-id">{this.state.message}</span>} />
             </App>
         );
     }

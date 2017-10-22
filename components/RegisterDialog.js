@@ -12,7 +12,6 @@ class RegisterDialog extends React.Component {
         super(props);
         
         this.state = {
-            displayName: '',
             email: '',
             password: '',
             error: null,
@@ -30,11 +29,10 @@ class RegisterDialog extends React.Component {
     handleSubmit = event => {
         event.preventDefault();
 
-        const { displayName, email, password } = this.state;
+        const { email, password } = this.state;
 
-        this.props.onSubmit(displayName, email, password)
+        this.props.onSubmit(email, password)
             .then(() => this.setState({
-                displayName: '',
                 email: '',
                 password: '',
                 error: null,
@@ -53,19 +51,6 @@ class RegisterDialog extends React.Component {
                     <DialogTitle>Registreren</DialogTitle>
                     <DialogContent>
                         <Grid container>
-                            <Grid item xs={12} sm={6}>
-                                <FormControl fullWidth>
-                                    <TextField
-                                        id="displayName"
-                                        name="displayName"
-                                        onChange={this.handleFieldChange('displayName')}
-                                        label="Naam"
-                                        type="text"
-                                        value={this.state.displayName}
-                                        fullWidth
-                                    />
-                                </FormControl>
-                            </Grid>
                             <Grid item xs={12} sm={6}>
                                 <FormControl fullWidth>
                                     <TextField
